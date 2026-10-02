@@ -1,6 +1,6 @@
 /* =================================================================
    INNOVABOARD · APRENDER — ÁREA DE CIENCIAS
-   Lógica de la aplicación
+   Lógica de la aplicación (sin inicio de sesión obligatorio)
 ================================================================= */
 
 (function () {
@@ -644,8 +644,6 @@
 
   /* ---------------------------------------------------------------
      1B. ESQUEMAS VISUALES POR LECCIÓN
-     Cada entrada tiene un SVG (el dibujo) y, cuando ayuda a entender
-     mejor las partes sueltas de un dibujo, una leyenda con colores.
   --------------------------------------------------------------- */
 
   const ESQUEMAS = {
@@ -902,7 +900,7 @@
     }
   }
 
-  let progreso = cargarProgreso(); // { 'bio-1': true, 'qui-2': true, ... }
+  let progreso = cargarProgreso();
   let materiaActiva = null;
   let leccionActivaId = null;
 
@@ -982,13 +980,11 @@
     const completadas = contarCompletadasTotal();
     const pct = porcentaje(completadas, TOTAL_LECCIONES);
 
-    // Estadísticas del inicio
     const homeProgress = document.getElementById('home-progress');
     const homeCompleted = document.getElementById('home-completed');
     if (homeProgress) homeProgress.textContent = pct + '%';
     if (homeCompleted) homeCompleted.textContent = String(completadas);
 
-    // Tarjetas de materias
     Object.keys(DATA).forEach(function (key) {
       const completadasMateria = contarCompletadasEnMateria(key);
       const pctMateria = porcentaje(completadasMateria, DATA[key].lecciones.length);
@@ -1000,7 +996,6 @@
       }
     });
 
-    // Sección de progreso global
     const resumenPorcentaje = document.getElementById('resumen-porcentaje');
     const resumenDetalle = document.getElementById('resumen-detalle');
     const progresoGlobalFill = document.getElementById('progreso-global-fill');
@@ -1011,7 +1006,6 @@
 
     renderProgresoGlobalMaterias();
 
-    // Si hay materia activa, refrescar su barra también
     if (materiaActiva) {
       actualizarProgresoMateriaUI(materiaActiva);
     }
@@ -1096,10 +1090,6 @@
     cerrarMenuMovil();
     actualizarBarraLectura();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function mostrarVistaMaterias() {
-    mostrarVistaExplorar();
   }
 
   function mostrarVistaProgreso() {
@@ -1367,7 +1357,7 @@
 
     html += '<div class="leccion-acciones">';
     html +=
-      '<button class="btn-completar" id="btn-completar-leccion" ' +
+      '<button class="btn-completar" id="btn-completar-leccion" type="button" ' +
       (completada ? 'disabled' : '') + '>' +
       '<i class="fa-solid ' + (completada ? 'fa-check' : 'fa-flag-checkered') + '"></i> ' +
       (completada ? 'Lección completada' : 'Completar lección') +
@@ -1375,7 +1365,7 @@
 
     if (!esUltima) {
       html +=
-        '<button class="btn-siguiente-leccion" id="btn-siguiente-leccion">' +
+        '<button class="btn-siguiente-leccion" id="btn-siguiente-leccion" type="button">' +
           'Siguiente lección <i class="fa-solid fa-arrow-right"></i>' +
         '</button>';
     }
@@ -1409,7 +1399,7 @@
   --------------------------------------------------------------- */
 
   function completarLeccion(materiaKey, leccionId) {
-    if (progreso[leccionId]) return; // ya estaba completada
+    if (progreso[leccionId]) return;
 
     const materia = DATA[materiaKey];
     const leccion = materia.lecciones.find(function (l) { return l.id === leccionId; });
@@ -1417,7 +1407,6 @@
     progreso[leccionId] = true;
     const guardadoOk = guardarProgreso(progreso);
 
-    // Actualizar botón con una pequeña animación
     const btnCompletar = document.getElementById('btn-completar-leccion');
     if (btnCompletar) {
       btnCompletar.disabled = true;
@@ -1436,7 +1425,6 @@
       '"' + leccion.titulo + '" — ' + materia.nombre
     );
 
-    // Comprobar si se completó toda la materia (desbloqueo simbólico de logro)
     const completadasMateria = contarCompletadasEnMateria(materiaKey);
     if (completadasMateria === materia.lecciones.length) {
       setTimeout(function () {
@@ -1495,8 +1483,9 @@
   }
 
   /* ---------------------------------------------------------------
-     11B. CUENTA / INICIO DE SESIÓN (DEMO LOCAL)
+     11B. CUENTA / INICIO DE SESIÓN (OPCIONAL, DEMO LOCAL)
      Guarda únicamente nombre, correo y grupo en este navegador.
+     Ya NO se abre automáticamente: solo si el usuario pulsa el botón.
   --------------------------------------------------------------- */
 
   const ACCOUNT_KEY = 'innovaboard_cuenta_estudiante';
@@ -1567,10 +1556,8 @@
   }
 
   function inicializarCuenta() {
-    const loginModal = document.getElementById('login-modal');
-    const profileModal = document.getElementById('profile-modal');
-    const profileButton = document.getElementById('btn-open-profile');
     const loginForm = document.getElementById('login-form');
+    const profileButton = document.getElementById('btn-open-profile');
     const logoutBtn = document.getElementById('logout-btn');
     const profileCloseBtn = document.getElementById('profile-close-btn');
 
@@ -1618,7 +1605,6 @@
         localStorage.removeItem(ACCOUNT_KEY);
         actualizarUIUsuario();
         cerrarModalesCuenta();
-        abrirModalCuenta('login-modal');
         mostrarToast('fa-right-from-bracket', 'Sesión cerrada', 'Puedes volver a entrar cuando quieras');
       });
     }
@@ -1627,11 +1613,7 @@
       if (event.key === 'Escape') cerrarModalesCuenta();
     });
 
-    if (!getAccount()) {
-      setTimeout(function () {
-        abrirModalCuenta('login-modal');
-      }, 450);
-    }
+    /* Se eliminó la apertura automática del login: ya no es obligatorio. */
   }
 
   function obtenerUltimaLeccionCompletada() {
